@@ -1,0 +1,45 @@
+body {
+  width: 100%;
+  margin: 0px;
+}
+
+#console {
+  position: fixed;
+  bottom: 0px;
+  left: 0px;
+  height: 64px;
+  width: 100%;
+  overflow: auto;
+  background-color: #fff;
+  margin:0px; padding:0px;
+}
+#console p {
+  font-size: 14px;
+  margin:0px; padding:0px;
+  margin-left: 1em;
+}
+#canvas_container {
+  position: fixed;
+  top: 0px;
+  //width: 600px;
+  width: 100%;
+  height: 100%;
+  //height: 600px;
+}
+canvas {
+  background-color: #000;
+  width: 100%;
+  height: 100%;
+}
+
+.asset {
+  display: none;
+}
+
+#popup {
+  display: none;
+  position: fixed;
+  height: 600px;
+  width: 100%;
+  text-align: center;
+}

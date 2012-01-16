@@ -1,0 +1,104 @@
+<html>
+<head>
+<script src="jquery.js"></script>
+<script src="objects.js"></script>
+<script src="lights.js"></script>
+<script src="map.js"></script>
+<script src="player.js"></script>
+<script src="engine.js"></script>
+<script src="objectmap.js"></script>
+<script src="zombie.js"></script>
+<script>
+var game;
+$(window).load(function() {
+var step = 20;
+var height = 600;
+var width = 600;
+
+var canvas = document.getElementById('canvas');
+var ctx;
+if (canvas.getContext) {
+  ctx = canvas.getContext('2d');
+  game = new Engine(ctx, step);
+  game.init();
+}
+else {
+  $('h1').text('Canvas broken');
+}
+
+$(document).keydown(function(e) {
+  var key = e.keyCode;
+  //console.log(key);
+  if (key == 75 || key == 38) { //w
+    game.move("up");
+  } else if (key == 72 || key == 37) { //a
+    game.move("left");
+  } else if (key == 74 || key == 40) { //s
+    game.move("down");
+  } else if (key == 76 || key == 39) { //d
+    game.move("right");
+  } else if (key == 32) { //space
+    game.tick();
+  } else if (key == 80) { //p
+    game.pickup();
+  } else if (key == 68) { //d
+    game.drop();
+  }
+});
+$('#action_wait').click(function(e) {
+  game.tick();
+});
+$('#action_pickup').click(function(e) {
+  game.pickup();
+});
+$('#action_read').click(function(e) {
+  game.readBook();
+});
+$('#action_take').click(function(e) {
+  game.takeItem();
+});
+$('#action_drop').click(function(e) {
+  game.dropItem();
+});
+
+$('#up').click(function(e) {
+  game.move("up");
+});
+$('#left').click(function(e) {
+  game.move("left");
+});
+$('#right').click(function(e) {
+  game.move("right");
+});
+$('#down').click(function(e) {
+  game.move("down");
+});
+
+$(window).resize( function(e) {
+  game.resize(e);
+});
+
+});
+</script>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<div id="canvas_container">
+<canvas id='canvas'></canvas>
+</div>
+
+<div id="console"></div>
+
+<img class="asset" id="player" src="assets/player.png"/>
+<img class="asset" id="book" src="assets/book.png"/>
+<img class="asset" id="wall" src="assets/wall.png"/>
+<img class="asset" id="bookcase" src="assets/bookcase.png"/>
+<img class="asset" id="fire" src="assets/candlebra.png"/>
+<img class="asset" id="torch" src="assets/torch.png"/>
+<img class="asset" id="lighter" src="assets/lighter.png"/>
+<img class="asset" id="lantern" src="assets/lantern.png"/>
+<img class="asset" id="matchbook" src="assets/matchbook.png"/>
+<img class="asset" id="zombie" src="assets/zombie.png"/>
+</body>
+</html>
