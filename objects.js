@@ -35,7 +35,7 @@ var Objects = {
       "*": {
         name: "light",
         light: {
-          radius: 5,
+          radius: 6,
           lum: 164,
           flicker: 20,
         },
