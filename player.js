@@ -6,7 +6,7 @@ function Player(x, y) {
   this.max_dmg = 20;
   this.item_in_hand = "";
 
-  this.def_light = { radius: 2, lum: 64, flicker: 0 };
+  this.def_light = { radius: 12, lum: 200, flicker: 0 };
   this.light = this.def_light;
 
   this.dead = false;
@@ -41,6 +41,8 @@ Player.prototype.drop = function() {
 
 //move player "up", "down", "left" or "right, unless they hit a wall
 Player.prototype.move = function(direction) {
+  var noclip = false;
+
   var x = this.x;
   var y = this.y;
   if (direction === "up") {
@@ -70,14 +72,13 @@ Player.prototype.move = function(direction) {
     else {
       game.say("You push a " + game.objects[last_on_tile].name + " away from you, dealing " + actual_dmg + " damage.");
     }
-  } else if (game.map.tileFull(x, y)) {
+  } else if (!noclip && game.map.tileFull(x, y)) {
     var blocks = game.map.getObjects(x, y);
     var last_on_tile = blocks.charAt(blocks.length - 1);
     game.say("You run into a " + game.objects[last_on_tile].name + ".");
   }
   else {
-    game.map.bg_x += this.x-x;
-    game.map.bg_y += this.y-y;
+    game.renderer.move(this.x - x, this.y - y);
     game.map.removeFromTile("@", this.x, this.y);
     game.map.addToTile("@", x, y);
     this.x = x;

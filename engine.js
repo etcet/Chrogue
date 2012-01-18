@@ -3,6 +3,7 @@ function Engine(ctx, step) {
 
   this.step = step;
   this.map = new Map(ctx, step);
+  this.renderer = null;
 
   var player_l = this.map.getPlayerLocation();
   this.player = new Player(player_l.x, player_l.y);
@@ -13,14 +14,14 @@ function Engine(ctx, step) {
   this.zombie_counter = 0;
 }
 Engine.prototype.init = function() {
-  //this.setCanvasSize();
+  this.renderer = new Renderer(this.ctx, this.step, this.map.getWidth(), this.map.getHeight());
   this.resize();
   this.initZombies();
   this.tick();
-  var self = this;
+  /*var self = this;
   var animate = window.setInterval(function() {
     self.map.draw();
-  }, 150);
+  }, 150);*/
 };
 Engine.prototype.reset = function() {
   this.map = new Map(this.ctx, this.step);
@@ -35,7 +36,7 @@ Engine.prototype.tick = function() {
   this.is_ticking = true;
   this.doZombies();
 //  this.map.lights.printEnemy();
-  this.map.draw();
+  this.renderer.render();
   this.lookAt(this.player.x, this.player.y);
   this.is_ticking = false;
 }
@@ -136,5 +137,5 @@ Engine.prototype.setCanvasSize = function() {
 };
 Engine.prototype.resize = function(e) {
   this.setCanvasSize();
-  this.map.resize(this.ctx.canvas.width, this.ctx.canvas.height);
+  this.renderer.resize(this.ctx.canvas.width, this.ctx.canvas.height);
 };

@@ -1,4 +1,5 @@
 function Lights(w, h) {
+  console.log(w, h);
   //width and height in grid coordinates
   this.gridw = w;
   this.gridh = h;

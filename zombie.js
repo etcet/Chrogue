@@ -61,7 +61,7 @@ Zombie.prototype.tick = function() {
     return;
   }
 
-  game.map.lights.doFOV(this.x,
+  game.renderer.lights.doFOV(this.x,
                         this.y,
                         4,
                         4,
@@ -71,7 +71,7 @@ Zombie.prototype.tick = function() {
                         this.id);
     
   var dloc = {};
-  if (game.map.lights.enemyCanSee(game.player.x, game.player.y, this.id)) {
+  if (game.renderer.lights.enemyCanSee(game.player.x, game.player.y, this.id)) {
     dloc = this.moveToPlayer();
   }
   else {
