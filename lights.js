@@ -13,9 +13,9 @@ function Lights(w, h) {
   }
   //luminance map has 4 cells for each light_map cell
   this.lum_map = [];
-  for (var i=0; i<this.gridh; i++) {
+  for (var i=0; i<this.gridh*2; i++) {
     this.lum_map.push([]);
-    for (var j=0; j<this.gridw; j++) {
+    for (var j=0; j<this.gridw*2; j++) {
       this.lum_map.push([0.0]);
     }
   }
@@ -72,8 +72,17 @@ Lights.prototype.enemyCanSee = function(x, y, id) {
 Lights.prototype.getDistance = function(lx, ly, x, y) {
   return Math.sqrt( (x-lx)*(x-lx) + (y-ly)*(y-ly) );
 };
-Lights.prototype.getShade = function(x, y) {
-  return this.lum_map[y][x];
+Lights.prototype.getAverageShade = function(x, y) {
+  return this.lum_map[y*2][x*2];
+};
+Lights.prototype.getShades = function(x, y) {
+  var shades =  [ this.lum_map[y*2][x*2],
+                  this.lum_map[y*2][x*2+1],   
+                  this.lum_map[y*2+1][x*2],   
+                  this.lum_map[y*2+1][x*2+1]
+                ];
+  //console.log('l',x,y, shades);
+  return shades;
 };
 Lights.prototype.shade = function(x, y, lx, ly) {
   var dist = this.getDistance(lx, ly, x, y);
@@ -81,11 +90,11 @@ Lights.prototype.shade = function(x, y, lx, ly) {
   var intcoeff1 = parseFloat(this.lum_start / (1.0 + dist*dist/this.lum_radius*2));
   var intcoeff2 = parseFloat(intcoeff1 - 1.0 / (1.0 + radsq));
   var intcoeff3 = parseFloat(intcoeff2 / (1.0 - 1.0/(1.0 + radsq)));
-  if (this.lit(x, y)) {
+  //if (this.lit(x, y)) {
     return Math.max(0.0, intcoeff3);
-  } else {
-    return 0.0;
-  }
+  //} else {
+  // return 0.0;
+  //}
 };
 
 //set tile as lit with current light flag
@@ -99,14 +108,18 @@ Lights.prototype.setLit = function(x, y, lx, ly) {
       return;
     }
 
+    lx = lx - .50;
     //if this is the first time it's been lit
     if (this.light_map[y][x].lit[0] !== this.light_flag) {
       this.light_map[y][x].lit[1] = this.light_cycle;
       //player always goes first so this works
       if (this.light_source === "player") {
         this.light_map[y][x].lit[0] = this.light_flag;
-        //this.lum_map[y][x] = Math.min(this.lum_start, this.shade(x, y, lx, ly));
-        this.lum_map[y][x] = this.shade(x, y, lx, ly);
+
+        this.lum_map[y*2][x*2] = this.shade(x-.25, y-.25, lx, ly);
+        this.lum_map[y*2][x*2+1] = this.shade(x+.25, y-.25, lx, ly);
+        this.lum_map[y*2+1][x*2] = this.shade(x-.25, y+.25, lx, ly);
+        this.lum_map[y*2+1][x*2+1] = this.shade(x+.25, y+.25, lx, ly);
       }
     }
     //hit again but not by the same light
@@ -114,13 +127,15 @@ Lights.prototype.setLit = function(x, y, lx, ly) {
       var lit = this.lit(x,y);
       this.light_map[y][x].lit[1] = this.light_cycle;
       if (lit) {
-        //this.lum_map[y][x] = Math.min(this.lum_start, this.lum_map[y][x] + Math.min(this.lum_start, this.shade(x, y, lx, ly)));
-        this.lum_map[y][x] = Math.min(this.lum_start, this.lum_map[y][x] + this.shade(x, y, lx, ly));
+        this.lum_map[y*2][x*2] = Math.min(this.lum_start, this.lum_map[y*2][x*2] + this.shade(x-.25, y-.25, lx, ly));
+        this.lum_map[y*2][x*2+1] = Math.min(this.lum_start, this.lum_map[y*2][x*2+1] + this.shade(x+.25, y-.25, lx, ly));
+        this.lum_map[y*2+1][x*2] = Math.min(this.lum_start, this.lum_map[y*2+1][x*2] + this.shade(x-.25, y+.25, lx, ly));
+        this.lum_map[y*2+1][x*2+1] = Math.min(this.lum_start, this.lum_map[y*2+1][x*2+1] + this.shade(x+.25, y+.25, lx, ly));
       }
     }
 
     if (this.lit(x,y)) {
-      if (this.lum_map[y][x] > 0.0) {
+      if (this.lum_map[y*2][x*2] > 0.0) {
         this.seen_map[y][x] = game.map.string_map[y][x];
       }
     }
@@ -194,8 +209,12 @@ Lights.prototype.castLight = function(cx, cy, row, start, end, radius, xx, xy, y
 Lights.prototype.reset = function() {
   for (var i=0; i<this.gridh; i++) {
     for (var j=0; j<this.gridw; j++) {
-      this.lum_map[i][j] = 0.0;
       this.enemy_lights[i][j] = [];
+    }
+  }
+  for (var i=0; i<this.gridh*2; i++) {
+    for (var j=0; j<this.gridw*2; j++) {
+      this.lum_map[i][j] = 0.0;
     }
   }
   this.light_flag += 1;

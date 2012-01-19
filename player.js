@@ -7,7 +7,7 @@ function Player(x, y) {
   this.item_in_hand = "";
 
   //this.def_light = { radius: 4, lum: 0.25, flicker: 0 };
-  this.def_light = { radius: 5, lum: 0.8, flicker: 0 };
+  this.def_light = { radius: 15, lum: 0.8, flicker: 0 };
   this.light = this.def_light;
 
   this.dead = false;

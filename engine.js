@@ -6,6 +6,7 @@ function Engine(ctx, step) {
   this.renderer = null;
 
   var player_l = this.map.getPlayerLocation();
+  console.log('player at:', player_l.x, player_l.y);
   this.player = new Player(player_l.x, player_l.y);
 
   this.objects = Objects;
