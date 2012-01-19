@@ -1,14 +1,22 @@
 function Lights(w, h) {
-  console.log(w, h);
   //width and height in grid coordinates
   this.gridw = w;
   this.gridh = h;
-  //light array, stores tick when tile was seen & shade
+  //light array, stores tick when tile was seen,
+  //and which light saw it (used for multiple light sources)
   this.light_map = [];  
   for (var i=0; i<this.gridh; i++) {
     this.light_map.push([]);
     for (var j=0; j<this.gridw; j++) {
-      this.light_map[i].push({lit: [0, 0], lum: 0});
+      this.light_map[i].push({lit: [0, 0]});
+    }
+  }
+  //luminance map has 4 cells for each light_map cell
+  this.lum_map = [];
+  for (var i=0; i<this.gridh; i++) {
+    this.lum_map.push([]);
+    for (var j=0; j<this.gridw; j++) {
+      this.lum_map.push([0.0]);
     }
   }
   //light incrementor
@@ -61,6 +69,25 @@ Lights.prototype.enemyCanSee = function(x, y, id) {
     return false;
 };
 
+Lights.prototype.getDistance = function(lx, ly, x, y) {
+  return Math.sqrt( (x-lx)*(x-lx) + (y-ly)*(y-ly) );
+};
+Lights.prototype.getShade = function(x, y) {
+  return this.lum_map[y][x];
+};
+Lights.prototype.shade = function(x, y, lx, ly) {
+  var dist = this.getDistance(lx, ly, x, y);
+  var radsq = this.lum_radius * this.lum_radius;
+  var intcoeff1 = parseFloat(this.lum_start / (1.0 + dist*dist/this.lum_radius*2));
+  var intcoeff2 = parseFloat(intcoeff1 - 1.0 / (1.0 + radsq));
+  var intcoeff3 = parseFloat(intcoeff2 / (1.0 - 1.0/(1.0 + radsq)));
+  if (this.lit(x, y)) {
+    return Math.max(0.0, intcoeff3);
+  } else {
+    return 0.0;
+  }
+};
+
 //set tile as lit with current light flag
 Lights.prototype.setLit = function(x, y, lx, ly) {
   if (x >= 0 && x<this.gridw && y<this.gridh && y >= 0) {
@@ -78,7 +105,8 @@ Lights.prototype.setLit = function(x, y, lx, ly) {
       //player always goes first so this works
       if (this.light_source === "player") {
         this.light_map[y][x].lit[0] = this.light_flag;
-        this.light_map[y][x].lum = Math.min(this.lum_start, this.shade(x, y, lx, ly));
+        //this.lum_map[y][x] = Math.min(this.lum_start, this.shade(x, y, lx, ly));
+        this.lum_map[y][x] = this.shade(x, y, lx, ly);
       }
     }
     //hit again but not by the same light
@@ -86,12 +114,13 @@ Lights.prototype.setLit = function(x, y, lx, ly) {
       var lit = this.lit(x,y);
       this.light_map[y][x].lit[1] = this.light_cycle;
       if (lit) {
-        this.light_map[y][x].lum = Math.min(this.lum_start, this.light_map[y][x].lum + Math.min(255, this.shade(x, y, lx, ly)));
+        //this.lum_map[y][x] = Math.min(this.lum_start, this.lum_map[y][x] + Math.min(this.lum_start, this.shade(x, y, lx, ly)));
+        this.lum_map[y][x] = Math.min(this.lum_start, this.lum_map[y][x] + this.shade(x, y, lx, ly));
       }
     }
 
     if (this.lit(x,y)) {
-      if (this.light_map[y][x].lum >  0) {
+      if (this.lum_map[y][x] > 0.0) {
         this.seen_map[y][x] = game.map.string_map[y][x];
       }
     }
@@ -165,7 +194,7 @@ Lights.prototype.castLight = function(cx, cy, row, start, end, radius, xx, xy, y
 Lights.prototype.reset = function() {
   for (var i=0; i<this.gridh; i++) {
     for (var j=0; j<this.gridw; j++) {
-      this.light_map[i][j].lum = 0;
+      this.lum_map[i][j] = 0.0;
       this.enemy_lights[i][j] = [];
     }
   }
@@ -180,7 +209,6 @@ Lights.prototype.doFOV = function(x,y,radius,lum_radius,lum_start,flicker,light_
   if (flicker > 0) {
     this.lum_radius = this.lum_radius + Math.random()/flicker;
   }
-  this.intensity = this.lum_start / ((this.lum_radius)*(this.lum_radius));
 
   if (light_source === "zombie") {
     this.light_id = light_id;
@@ -201,21 +229,6 @@ Lights.prototype.doFOV = function(x,y,radius,lum_radius,lum_start,flicker,light_
     this.castLight(x, y, 1, 1.0, 0.0, radius, mult[0][i], mult[1][i], mult[2][i], mult[3][i], 0);
   }
   this.setLit(x,y, x, y);
-};
-
-Lights.prototype.getDistance = function(lx, ly, x, y) {
-  return Math.sqrt( (x-lx)*(x-lx) + (y-ly)*(y-ly) );
-};
-Lights.prototype.getShade = function(x, y) {
-  return this.light_map[y][x].lum;
-};
-Lights.prototype.shade = function(x, y, lx, ly) {
-  var dist = this.getDistance(lx, ly, x,y);
-  if (this.lit(x,y)) {
-    return Math.max(0, parseInt(this.lum_start - dist*dist * this.intensity));
-  } else {
-    return 0;
-  }
 };
 
 Lights.prototype.printEnemy = function() {
