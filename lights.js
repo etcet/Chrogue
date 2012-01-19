@@ -1,22 +1,21 @@
-function Lights(w, h) {
+function Lights(w, h, light_res) {
   //width and height in grid coordinates
   this.gridw = w;
   this.gridh = h;
+  
+  //sqrt of number of sub cells per cell
+  this.light_res = light_res;
   //light array, stores tick when tile was seen,
   //and which light saw it (used for multiple light sources)
   this.light_map = [];  
-  for (var i=0; i<this.gridh; i++) {
-    this.light_map.push([]);
-    for (var j=0; j<this.gridw; j++) {
-      this.light_map[i].push({lit: [0, 0]});
-    }
-  }
-  //luminance map has 4 cells for each light_map cell
+  //luminance map has n cells for each light_map cell
   this.lum_map = [];
-  for (var i=0; i<this.gridh*2; i++) {
+  for (var i=0; i<this.gridh*this.light_res; i++) {
     this.lum_map.push([]);
-    for (var j=0; j<this.gridw*2; j++) {
+    this.light_map.push([]);
+    for (var j=0; j<this.gridw*this.light_res; j++) {
       this.lum_map.push([0.0]);
+      this.light_map[i].push([0, 0]);
     }
   }
   //light incrementor
@@ -39,10 +38,13 @@ function Lights(w, h) {
       this.seen_map[i].push("");
     }
   }
+
 };
 
 //is x,y tile blocking
-Lights.prototype.blocked = function(x,y) {
+Lights.prototype.blocked = function(x, y) {
+  x = Math.floor(x / this.light_res);
+  y = Math.floor(y / this.light_res);
   if (x < 0 || y < 0 || x >= this.gridw || y >= this.gridh) {
     return true;
   }
@@ -59,8 +61,12 @@ Lights.prototype.isObjectOpaque = function(c) {
   return game.objects[c].opaque;
 };
 //is tile lit right now?
-Lights.prototype.lit = function(x,y) {
-  return (this.light_map[y][x].lit[0] === this.light_flag);
+Lights.prototype.lit = function(x, y) {
+  return (this.light_map[y*this.light_res][x*this.light_res][0] === this.light_flag);
+};
+//is sub-tile lit right now?
+Lights.prototype.subLit = function(x, y) {
+  return (this.light_map[y][x][0] === this.light_flag);
 };
 Lights.prototype.enemyCanSee = function(x, y, id) {
   if (jQuery.inArray(id, this.enemy_lights[y][x]) >= 0)
@@ -73,23 +79,37 @@ Lights.prototype.getDistance = function(lx, ly, x, y) {
   return Math.sqrt( (x-lx)*(x-lx) + (y-ly)*(y-ly) );
 };
 Lights.prototype.getAverageShade = function(x, y) {
-  return this.lum_map[y*2][x*2];
+  var sum = 0;
+  var num = 0;
+  for (var j=0; j<this.light_res; j++) {
+    for (var i=0; i<this.light_res; i++) {
+      sum += this.lum_map[y*this.light_res+j][x*this.light_res+i];
+      num += 1;
+    }
+  }
+  
+  return sum / num;
+};
+Lights.prototype.getShade = function(x, y) {
+  return this.lum_map[y][x]; 
 };
 Lights.prototype.getShades = function(x, y) {
-  var shades =  [ this.lum_map[y*2][x*2],
-                  this.lum_map[y*2][x*2+1],   
-                  this.lum_map[y*2+1][x*2],   
-                  this.lum_map[y*2+1][x*2+1]
-                ];
-  //console.log('l',x,y, shades);
+  var shades = []
+  for (var j=0; j<this.light_res; j++) {
+    for (var i=0; i<this.light_res; i++) {
+      shades.push(this.lum_map[y*this.light_res+j, x*this.light_res+i]);
+    }
+  }
+
   return shades;
 };
 Lights.prototype.shade = function(x, y, lx, ly) {
   var dist = this.getDistance(lx, ly, x, y);
   var radsq = this.lum_radius * this.lum_radius;
-  var intcoeff1 = parseFloat(this.lum_start / (1.0 + dist*dist/this.lum_radius*2));
+  var intcoeff1 = parseFloat(this.lum_start / (1.0 + dist*dist/this.intensity));
   var intcoeff2 = parseFloat(intcoeff1 - 1.0 / (1.0 + radsq));
   var intcoeff3 = parseFloat(intcoeff2 / (1.0 - 1.0/(1.0 + radsq)));
+  //console.log('shade',x, y, lx, ly, intcoeff3);
   //if (this.lit(x, y)) {
     return Math.max(0.0, intcoeff3);
   //} else {
@@ -99,43 +119,40 @@ Lights.prototype.shade = function(x, y, lx, ly) {
 
 //set tile as lit with current light flag
 Lights.prototype.setLit = function(x, y, lx, ly) {
-  if (x >= 0 && x<this.gridw && y<this.gridh && y >= 0) {
+  //console.log('setLit', x, y, lx, ly);
+  if (x >= 0 && x < (this.gridw*this.light_res) && y < (this.gridh*this.light_res) && y >= 0) {
 
-    if (this.light_source === "zombie") {
+    /*if (this.light_source === "zombie") {
       if (jQuery.inArray(this.light_id, this.enemy_lights[y][x]) === -1) {
         this.enemy_lights[y][x].push(this.light_id);
       }
       return;
-    }
+    }*/
 
-    lx = lx - .50;
     //if this is the first time it's been lit
-    if (this.light_map[y][x].lit[0] !== this.light_flag) {
-      this.light_map[y][x].lit[1] = this.light_cycle;
+    if (this.light_map[y][x][0] !== this.light_flag) {
+      this.light_map[y][x][1] = this.light_cycle;
       //player always goes first so this works
       if (this.light_source === "player") {
-        this.light_map[y][x].lit[0] = this.light_flag;
-
-        this.lum_map[y*2][x*2] = this.shade(x-.25, y-.25, lx, ly);
-        this.lum_map[y*2][x*2+1] = this.shade(x+.25, y-.25, lx, ly);
-        this.lum_map[y*2+1][x*2] = this.shade(x-.25, y+.25, lx, ly);
-        this.lum_map[y*2+1][x*2+1] = this.shade(x+.25, y+.25, lx, ly);
+        this.light_map[y][x][0] = this.light_flag;
+        //this.lum_map[y][x] = this.shade(x, y, lx-.5, ly+.5);
+        this.lum_map[y][x] = this.shade(x, y, lx, ly);
+//        console.log(this.lum_map[y][x]);
       }
     }
     //hit again but not by the same light
-    else if (this.light_map[y][x].lit[1] !== this.light_cycle) {
-      var lit = this.lit(x,y);
-      this.light_map[y][x].lit[1] = this.light_cycle;
+    else if (this.light_map[y][x][1] !== this.light_cycle) {
+      var lit = this.subLit(x, y);
+      this.light_map[y][x][1] = this.light_cycle;
       if (lit) {
-        this.lum_map[y*2][x*2] = Math.min(this.lum_start, this.lum_map[y*2][x*2] + this.shade(x-.25, y-.25, lx, ly));
-        this.lum_map[y*2][x*2+1] = Math.min(this.lum_start, this.lum_map[y*2][x*2+1] + this.shade(x+.25, y-.25, lx, ly));
-        this.lum_map[y*2+1][x*2] = Math.min(this.lum_start, this.lum_map[y*2+1][x*2] + this.shade(x-.25, y+.25, lx, ly));
-        this.lum_map[y*2+1][x*2+1] = Math.min(this.lum_start, this.lum_map[y*2+1][x*2+1] + this.shade(x+.25, y+.25, lx, ly));
+        this.lum_map[y][x] = Math.min(this.lum_start, this.lum_map[y][x] + this.shade(x, y, lx, ly));
       }
     }
 
-    if (this.lit(x,y)) {
-      if (this.lum_map[y*2][x*2] > 0.0) {
+    if (this.subLit(x, y)) {
+      x = Math.floor(x / this.light_res);
+      y = Math.floor(y / this.light_res);
+      if (this.getAverageShade(x, y) > 0.05) {
         this.seen_map[y][x] = game.map.string_map[y][x];
       }
     }
@@ -212,8 +229,8 @@ Lights.prototype.reset = function() {
       this.enemy_lights[i][j] = [];
     }
   }
-  for (var i=0; i<this.gridh*2; i++) {
-    for (var j=0; j<this.gridw*2; j++) {
+  for (var i=0; i<this.gridh*this.light_res; i++) {
+    for (var j=0; j<this.gridw*this.light_res; j++) {
       this.lum_map[i][j] = 0.0;
     }
   }
@@ -221,9 +238,11 @@ Lights.prototype.reset = function() {
 };
 
 //calculator lit squares from the given location and radius
-Lights.prototype.doFOV = function(x,y,radius,lum_radius,lum_start,flicker,light_source, light_id) {
+Lights.prototype.doFOV = function(x,y,radius,lum_radius,intensity,lum_start,flicker,light_source, light_id) {
+  this.intensity = intensity;
   this.lum_start = lum_start; 
   this.light_source = light_source;
+  //radius = radius * this.light_res 
   this.lum_radius = lum_radius;
   if (flicker > 0) {
     this.lum_radius = this.lum_radius + Math.random()/flicker;
@@ -245,9 +264,12 @@ Lights.prototype.doFOV = function(x,y,radius,lum_radius,lum_start,flicker,light_
               [1,  0,  0,  1, -1,  0,  0, -1]
              ];
   for (var i=0;i<8;i++) {
-    this.castLight(x, y, 1, 1.0, 0.0, radius, mult[0][i], mult[1][i], mult[2][i], mult[3][i], 0);
+    var centerx = x * this.light_res + (this.light_res - 1) / 2;
+    var centery = y * this.light_res + (this.light_res - 1) / 2;
+    this.castLight(centerx, centery, 1, 1.0, 0.0, radius, mult[0][i], mult[1][i], mult[2][i], mult[3][i], 0);
   }
-  this.setLit(x,y, x, y);
+  //light center of light
+  this.setLit(centerx, centery, centerx, centery);
 };
 
 Lights.prototype.printEnemy = function() {

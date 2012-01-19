@@ -2,7 +2,7 @@ var Objects = {
       renderImage: function(img, self, x, y, offset) {
         x = x*self.step+self.bg_x*self.step;
         y = y*self.step+self.bg_y*self.step;
-        self.ctx.drawImage(img, x + offset, y + offset);
+        self.ctx.drawImage(img, x + offset, y + offset, self.step - 2*offset, self.step - 2*offset);
       },
       /* 7yy
       "": {
@@ -34,7 +34,8 @@ var Objects = {
       "*": {
         name: "light",
         light: {
-          radius: 6,
+          radius: 20,
+          intensity: 6,
           lum: 0.8,
           flicker: 20,
         },
@@ -78,11 +79,11 @@ var Objects = {
           var x = x*self.step+self.bg_x*self.step;
           var y = y*self.step+self.bg_y*self.step;
 
-          self.ctx.fillStyle="rgb(0,0,0)";
+          /*self.ctx.fillStyle="rgb(0,0,0)";
           self.ctx.beginPath();
           self.ctx.arc(x+self.step/2, y+self.step/2, self.step/10,0,2*Math.PI,false);
           self.ctx.closePath();
-          self.ctx.fill();     
+          self.ctx.fill();     */
 
           self.ctx.fillStyle="rgb(250,250,250)";
           self.ctx.beginPath();

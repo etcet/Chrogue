@@ -18,7 +18,7 @@ Engine.prototype.init = function() {
   this.renderer = new Renderer(this.ctx, this.step, this.map.getWidth(), this.map.getHeight());
   this.resize();
   this.initZombies();
-  this.tick();
+  //this.tick();
   /*var self = this;
   var animate = window.setInterval(function() {
     self.map.draw();

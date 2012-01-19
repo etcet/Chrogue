@@ -27,14 +27,14 @@ function Map(ctx, step) {
               '#                    #BBBBBBBBBBB#                #',
               '###################################################',
               ]*/
-  this.map = new GeneratedMap(100, 100);
+  this.map = new GeneratedMap(32, 32);
   
   this.string_map = [];
   for (var i=0; i<this.map.length; i++) {
     this.string_map.push((this.map[i].split('')))
   }
 
-  this.addToTile("@", 32, 32);
+  this.addToTile("@", 8, 8);
 }
 
 Map.prototype.getWidth = function() {
