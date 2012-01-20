@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chrogue</title>
+<script src="jquery.js"></script>
+<script src="game/objects.js"></script>
+<script src="game/lights.js"></script>
+<script src="game/generated_map.js"></script>
+<script src="game/map.js"></script>
+<script src="game/player.js"></script>
+<script src="game/renderer.js"></script>
+<script src="game/engine.js"></script>
+<script src="game/objectmap.js"></script>
+<script src="game/zombie.js"></script>
+<script src="game/controls.js"></script>
+<script>
+var game;
+$(window).load(function() {
+  var step = 24;
+
+  var canvas = document.getElementById('canvas');
+  var ctx;
+
+  if (canvas.getContext) {
+    ctx = canvas.getContext('2d');
+    game = new Engine(ctx, step);
+    game.init();
+  }
+  else {
+    $('h1').text('Canvas broken');
+  }
+
+});
+</script>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<div id="canvas_container">
+<canvas id='canvas'></canvas>
+</div>
+
+<div id="console"></div>
+
+<img class="asset" id="player" src="assets/player.png"/>
+<img class="asset" id="book" src="assets/book.png"/>
+<img class="asset" id="wall" src="assets/wall.png"/>
+<img class="asset" id="bookcase" src="assets/bookcase.png"/>
+<img class="asset" id="fire" src="assets/candlebra.png"/>
+<img class="asset" id="torch" src="assets/torch.png"/>
+<img class="asset" id="lighter" src="assets/lighter.png"/>
+<img class="asset" id="lantern" src="assets/lantern.png"/>
+<img class="asset" id="matchbook" src="assets/matchbook.png"/>
+<img class="asset" id="zombie" src="assets/zombie.png"/>
+</body>
+</html>
