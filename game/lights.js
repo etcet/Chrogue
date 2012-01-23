@@ -9,12 +9,12 @@ function Lights(w, h, light_res) {
   //and which light saw it (used for multiple light sources)
   this.light_map = [];  
   //luminance map has n cells for each light_map cell
-  this.lum_map = [];
+  this.color_map = [];
   for (var i=0; i<this.gridh*this.light_res; i++) {
-    this.lum_map.push([]);
+    this.color_map.push([]);
     this.light_map.push([]);
     for (var j=0; j<this.gridw*this.light_res; j++) {
-      this.lum_map.push([0.0]);
+      this.color_map.push([0.0, 0.0, 0.0]);
       this.light_map[i].push([0, 0]);
     }
   }
@@ -78,26 +78,19 @@ Lights.prototype.enemyCanSee = function(x, y, id) {
 Lights.prototype.getDistance = function(lx, ly, x, y) {
   return Math.sqrt( (x-lx)*(x-lx) + (y-ly)*(y-ly) );
 };
-Lights.prototype.getAverageShade = function(x, y) {
-  var sum = 0;
-  var num = 0;
-  for (var j=0; j<this.light_res; j++) {
-    for (var i=0; i<this.light_res; i++) {
-      sum += this.lum_map[y*this.light_res+j][x*this.light_res+i];
-      num += 1;
-    }
-  }
-  
-  return sum / num;
-};
 Lights.prototype.getShade = function(x, y) {
-  return this.lum_map[y][x]; 
+  var shade = this.color_map[y][x][0] + this.color_map[y][x][1] + this.color_map[y][x][2];
+  
+  return shade / 3;
+};
+Lights.prototype.getColor = function(x, y) {
+  return this.color_map[y][x]; 
 };
 Lights.prototype.getShades = function(x, y) {
   var shades = []
   for (var j=0; j<this.light_res; j++) {
     for (var i=0; i<this.light_res; i++) {
-      shades.push(this.lum_map[y*this.light_res+j, x*this.light_res+i]);
+      shades.push(this.color_map[y*this.light_res+j, x*this.light_res+i]);
     }
   }
 
@@ -110,7 +103,12 @@ Lights.prototype.shade = function(x, y, lx, ly) {
   var intcoeff2 = parseFloat(intcoeff1 - 1.0 / (1.0 + radsq));
   var intcoeff3 = parseFloat(intcoeff2 / (1.0 - 1.0/(1.0 + radsq)));
   //console.log('shade',x, y, lx, ly, intcoeff3);
-  return Math.max(0.0, intcoeff3);
+  intcoeff3 = Math.max(0.0, intcoeff3);
+  var color = [ this.color.r * intcoeff3,
+                this.color.g * intcoeff3,
+                this.color.b * intcoeff3 ];
+//  console.log (this.color, intcoeff3, color);
+  return color;
 };
 
 //set tile as lit with current light flag
@@ -133,8 +131,7 @@ Lights.prototype.setLit = function(x, y, lx, ly) {
       //player always goes first so this works
       if (this.light_source === "player") {
         this.light_map[y][x][0] = this.light_flag;
-        //this.lum_map[y][x] = this.shade(x, y, lx-.5, ly+.5);
-        this.lum_map[y][x] = this.shade(x, y, lx, ly);
+        this.color_map[y][x] = this.shade(x, y, lx, ly);
       }
     }
     //hit again but not by the same light
@@ -142,15 +139,18 @@ Lights.prototype.setLit = function(x, y, lx, ly) {
       var lit = this.subLit(x, y);
       this.light_map[y][x][1] = this.light_cycle;
       if (lit) {
-        this.lum_map[y][x] = Math.min(this.lum_start, this.lum_map[y][x] + this.shade(x, y, lx, ly));
+        var color = this.shade(x, y, lx, ly);
+        this.color_map[y][x][0] += color[0];
+        this.color_map[y][x][1] += color[1];
+        this.color_map[y][x][2] += color[2];
       }
     }
 
     if (this.subLit(x, y)) {
-      x = Math.floor(x / this.light_res);
-      y = Math.floor(y / this.light_res);
-      if (this.getAverageShade(x, y) > 0.05) {
-        this.seen_map[y][x] = game.map.string_map[y][x];
+      if (this.getShade(x, y) > 0.05) {
+        var gx = Math.floor(x / this.light_res);
+        var gy = Math.floor(y / this.light_res);
+        this.seen_map[gy][gx] = game.map.string_map[gy][gx];
       }
     }
   }
@@ -228,14 +228,24 @@ Lights.prototype.reset = function() {
   }
   for (var i=0; i<this.gridh*this.light_res; i++) {
     for (var j=0; j<this.gridw*this.light_res; j++) {
-      this.lum_map[i][j] = 0.0;
+      this.color_map[i][j] = [0.0, 0.0, 0.0];
     }
   }
   this.light_flag += 1;
 };
 
 //calculator lit squares from the given location and radius
-Lights.prototype.doFOV = function(x,y,radius,lum_radius,intensity,lum_start,flicker,light_source, light_id) {
+Lights.prototype.doFOV = function(x,
+                                  y,
+                                  radius,
+                                  lum_radius,
+                                  intensity,
+                                  lum_start,
+                                  flicker,
+                                  light_color,
+                                  light_source,
+                                  light_id) {
+  this.color = light_color;
   this.intensity = intensity;
   this.lum_start = lum_start; 
   this.light_source = light_source;

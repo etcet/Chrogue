@@ -44,12 +44,14 @@ Renderer.prototype.render = function() {
                     game.player.light.intensity,
                     game.player.light.lum,
                     game.player.light.flicker,
+                    game.player.light.color,
                     "player");
   //do lights 
   for (var b in game.objects) {
     var light = game.objects[b].light;
     if (light) {
       var lights = game.map.getLocation(b);
+      var color = {r: Math.random(), g: Math.random(), b: Math.random()};
       for (var i=0; i<lights.length; i++) {
         this.lights.doFOV(lights[i].x,
                           lights[i].y,
@@ -58,6 +60,7 @@ Renderer.prototype.render = function() {
                           light.intensity,
                           light.lum,
                           light.flicker,
+                          color,
                           "light");
       }
     }
@@ -87,9 +90,10 @@ Renderer.prototype.renderMap = function() {
 
       var avg_shade = 0;
       for (var k=0; k<shades.length; k++) {
-        avg_shade += shades[k];
+        avg_shade += (shades[k][0] + shades[k][1] + shades[k][2]);
       }
       avg_shade = avg_shade / shades.length;
+      //console.log(avg_shade);
 
       if (avg_shade > 0.00) {
         this.ctx.globalAlpha = 1.0;
@@ -119,8 +123,10 @@ Renderer.prototype.renderTile = function(shades, x, y) {
 
   for (var j=0; j<this.light_res; j++) {
     for (var i=0; i<this.light_res; i++) {
-      color = parseInt(255 * shades[j*this.light_res + i]);
-      this.ctx.fillStyle="rgb("+color+","+color+","+color+")";
+      var color_r = parseInt(255 * shades[j*this.light_res + i][0]);
+      var color_g = parseInt(255 * shades[j*this.light_res + i][1]);
+      var color_b = parseInt(255 * shades[j*this.light_res + i][2]);
+      this.ctx.fillStyle="rgb("+color_r+","+color_g+","+color_b+")";
   
       var tx;
       var ty;
@@ -143,35 +149,43 @@ Renderer.prototype.getShades = function(c, x, y) {
   var last_seen = this.lights.seen_map[y][x];
   var all_lit = false;
   var only_lit = false;
-  var max_shade = 0.8;
+  var max_shade = [0.8, 0.8, 0.8];
+  var min_shade = [0.125, 0.125, 0.125];
+  var no_shade = [0.0, 0.0, 0.0];
   var obj = game.objects[c];
 
   var shades = [];
   for (var i=0; i<this.light_res; i++) {
     for (var j=0; j<this.light_res; j++) {
-      shades.push(0.0);
+      shades.push(no_shade);
     }
   }
 
   if (all_lit) {
     shade = max_shade;
+    for (var j=0; j<this.light_res; j++) {
+      for (var i=0; i<this.light_res; i++) {
+        shades[j*this.light_res + i] = max_shade;
+      }
+    }
   }
   else {
     x = x * this.light_res;
     y = y * this.light_res;
     for (var j=0; j<this.light_res; j++) {
       for (var i=0; i<this.light_res; i++) {
-        var shade = 0.0;
+        var color = no_shade;
         if (this.lights.subLit(x+i, y+j)) {
+          color = this.lights.getColor(x+i, y+j);
           shade = this.lights.getShade(x+i, y+j);
           if (only_lit)
-            shade = max_shade;
+            color = max_shade;
           else if (c === "#" && last_seen === "#") {// && shade < 0.125) 
             if (shade < 0.125) {
-              shade = 0.125;
+              color = min_shade;
             }
             else {
-              shade = shade * 2;
+              //shade = shade * 2;
             }
           }
           //else
@@ -179,13 +193,13 @@ Renderer.prototype.getShades = function(c, x, y) {
         }
         else if (last_seen !== "") {
           if (obj.zombie || obj.name === "floor") {
-            shade = 0.0;
+            color = no_shade;
           }
           else {
-            shade = 0.125;
+            color = min_shade;
           }
         }
-        shades[j*this.light_res + i] = shade;
+        shades[j*this.light_res + i] = color;
       }
     }
   }

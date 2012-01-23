@@ -13,6 +13,13 @@ function Zombie(x, y) {
   this.skip_turn = false;
 
   this.def_light = { radius: 6, intensity: 8,  lum: 0.8, flicker: 0 };
+  this.def_light = { 
+                      radius: 6,
+                      intensity: 8,
+                      lum: 0.8,
+                      flicker: 0,
+                      color: {r: 1.0, g: 1.0, b: 1.0},
+                    };
   this.light = this.def_light;
 
   this.init();
@@ -78,6 +85,7 @@ Zombie.prototype.tick = function() {
                               this.light.intensity,
                               this.light.lum,
                               this.light.flicker,
+                              this.light.color,
                               "zombie",
                               this.id);
   //game.renderer.lights.printEnemy();

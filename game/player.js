@@ -6,7 +6,13 @@ function Player(x, y) {
   this.max_dmg = 20;
   this.item_in_hand = "";
 
-  this.def_light = { radius: 30, intensity: 20,  lum: 0.8, flicker: 0 };
+  this.def_light = { 
+                      radius: 30,
+                      intensity: 20,
+                      lum: 0.8,
+                      flicker: 0,
+                      color: {r: 1.0, g: 0.0, b: 0.0},
+                   };
   this.light = this.def_light;
 
   this.dead = false;

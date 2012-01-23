@@ -38,6 +38,7 @@ var Objects = {
           intensity: 6,
           lum: 0.8,
           flicker: 20,
+          color: {r: 0.0, g: 1.0, b: 0.0},
         },
         blocks_movement: true,
         render: function(self, x, y) {
