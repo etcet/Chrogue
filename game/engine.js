@@ -18,8 +18,8 @@ function Engine(ctx, step) {
 }
 Engine.prototype.init = function() {
   this.renderer = new Renderer(this.ctx, this.step, this.map.getWidth(), this.map.getHeight());
+  this.initObjects(); //initialize zombie object and lights
   this.resize();
-  this.initZombies();
   //this.tick();
   /*var self = this;
   var animate = window.setInterval(function() {
@@ -65,6 +65,14 @@ Engine.prototype.pickup = function() {
   for (var i = 0; i < objs.length; i++) {
     var object = objs[i];
     if (this.objects[object].can_pickup) {
+      if (object === "*") {
+        var light = this.object_map.get(this.player.x, this.player.y);
+        this.player.absorbLight(light);
+        this.map.removeFromTile(object, this.player.x, this.player.y);
+        this.object_map.delete(light, this.player.x, this.player.y);
+        this.tick();
+        break;
+      }
       if (this.player.pickUp(object)) {
         this.say("You pickup the " + this.objects[object].name + ". Press d to drop it.");
         this.map.removeFromTile(object, this.player.x, this.player.y);
@@ -107,18 +115,34 @@ Engine.prototype.move = function(x, y) {
   this.is_ticking = false;
 };
 
-Engine.prototype.initZombies = function() {
+Engine.prototype.initObjects = function() {
+  console.log('init objects');
   var zombies = this.map.getLocation("z");
   for (var i=0; i<zombies.length; i++) {
     var zombie_loc = zombies[i];
     this.createZombie(zombie_loc.x, zombie_loc.y);
   }
+
+  var lights = this.map.getLocation("*");
+  for (var i=0; i<lights.length; i++) {
+    var light_loc = lights[i];
+    this.createLight(light_loc.x, light_loc.y);
+  }
 };
+
 Engine.prototype.createZombie = function(x, y) {
   var zombie = new Zombie(x, y);
   this.zombie_counter += 1;
   this.object_map.add(zombie, x, y);
 };
+
+Engine.prototype.createLight = function(x, y) {
+  console.log('new light');
+  var light = new Light(x, y);
+  //this.zombie_counter += 1;
+  this.object_map.add(light, x, y);
+};
+
 Engine.prototype.doZombies = function() {
   var zombies = this.map.getLocation("z");
   for (var i = 0; i < zombies.length; i++) {

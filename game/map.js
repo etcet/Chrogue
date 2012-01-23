@@ -29,7 +29,7 @@ function Map(ctx, step) {
               ]*/
 
   var objects = [ {character: '@', count: 1},
-                  {character: '*', count: 10},
+                  {character: '*', count: 13},
                   {character: 'z', count: 1}
                 ];
   this.map = new GeneratedMap(32, 32, objects);

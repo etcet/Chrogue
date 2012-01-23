@@ -11,12 +11,22 @@ function Player(x, y) {
                       intensity: 20,
                       lum: 0.8,
                       flicker: 0,
-                      color: {r: 1.0, g: 0.0, b: 0.0},
+                      color: {r: Math.random(), g: Math.random(), b: Math.random()},
                    };
   this.light = this.def_light;
 
   this.dead = false;
 }
+
+Player.prototype.absorbLight = function(light) {
+  console.log(this.light.color, light.color);
+  this.light.color.r += light.color.r;  
+  this.light.color.g += light.color.g;  
+  this.light.color.b += light.color.b;  
+  //this.light.intensity += light.intensity / 2;
+
+  return true;
+};
 
 Player.prototype.pickUp = function(item) {
   if (this.item_in_hand === "") {

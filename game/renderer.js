@@ -47,7 +47,21 @@ Renderer.prototype.render = function() {
                     game.player.light.color,
                     "player");
   //do lights 
-  for (var b in game.objects) {
+  var lights = game.map.getLocation("*");
+  for (var i=0; i<lights.length; i++) {
+    var light_loc = lights[i];
+    var light = game.object_map.get(light_loc.x, light_loc.y);
+    this.lights.doFOV(light_loc.x,
+                      light_loc.y,
+                      light.radius,
+                      light.radius,
+                      light.intensity,
+                      light.lum,
+                      light.flicker,
+                      light.color,
+                      "light");
+  }
+  /*for (var b in game.objects) {
     var light = game.objects[b].light;
     if (light) {
       var lights = game.map.getLocation(b);
@@ -64,7 +78,7 @@ Renderer.prototype.render = function() {
                           "light");
       }
     }
-  }
+  }*/
 
   this.renderMap();
   //this.lights.printEnemy();
