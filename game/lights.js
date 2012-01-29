@@ -246,6 +246,9 @@ Lights.prototype.doFOV = function(x,
                                   light_source,
                                   light_id) {
   this.color = light_color;
+  if (!this.color) {
+    return;
+  }
   this.intensity = intensity;
   this.lum_start = lum_start; 
   this.light_source = light_source;

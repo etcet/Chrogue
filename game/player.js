@@ -11,7 +11,7 @@ function Player(x, y) {
                       intensity: 20,
                       lum: 0.8,
                       flicker: 0,
-                      color: {r: Math.random(), g: Math.random(), b: Math.random()},
+                      color: {r: 0.1, g: 0.1, b: 3.1},
                    };
   this.light = this.def_light;
 
@@ -20,10 +20,13 @@ function Player(x, y) {
 
 Player.prototype.absorbLight = function(light) {
   console.log(this.light.color, light.color);
-  this.light.color.r += light.color.r;  
-  this.light.color.g += light.color.g;  
-  this.light.color.b += light.color.b;  
-  //this.light.intensity += light.intensity / 2;
+  this.light.color.r += light.color.r/5;  
+  this.light.color.g += light.color.g/5;  
+  this.light.color.b += light.color.b/5;  
+  this.light.color.r = Math.min(1.5, this.light.color.r);
+  this.light.color.g = Math.min(1.5, this.light.color.g);
+  this.light.color.b = Math.min(1.5, this.light.color.b);
+  this.light.intensity += light.intensity / 10;
 
   return true;
 };
